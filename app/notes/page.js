@@ -4,10 +4,9 @@ import MDX from "@/components/MDX";
 import SideNav from "@/components/SideNav";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/firebase";
-import { doc, serverTimestamp, setDoc } from "firebase/firestore";
+import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { getDoc } from 'firebase/firestore';
 
 export default function NotesPage() {
   
@@ -15,9 +14,9 @@ export default function NotesPage() {
   // const [text, setText] = useState('');
   const [showNav, setShowNav] = useState(false);
   const [note, setNote] = useState({
-    content: '',
+    content: ''
   });
-  const [isloading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const [noteIds, setNoteIds] = useState([])
   const [savingNote, setSavingNote] = useState(false)
 
@@ -26,18 +25,16 @@ export default function NotesPage() {
   const searchParams = useSearchParams()
 
   function handleToggleViewer() {
-    console.log('toggling viewer/editor' , isViewer);
     setIsViewer(!isViewer);
   }
 
   function handleToggleMenu() {
-    console.log('toggling menu', showNav);
     setShowNav(!showNav);
   }
   function handleCreateNote() {
     // create a new note
     setNote({
-      content: '',
+      content: ''
     })
     setIsViewer(false)
     window.history.replaceState(null, '', '/notes')
@@ -45,24 +42,20 @@ export default function NotesPage() {
 
   function handleEditNote(e) {
     // edit an existing note
-    setNote({...note,
-      content: e.target.value,
-    })
+    setNote({ ...note, content: e.target.value })
   }
 
   async function handleSaveNote() {
-    if (!note?.content) {
-      return;
-    }
+    if (!note?.content) { return }
     setSavingNote(true)
     try {
       // see if note already exists in database
       if (note.id) {
         // update existing note
-        const notesRef = doc(db, 'users', currentUser.uid, 'notes', note.id);
-        await setDoc(notesRef, {
-          ...note,
-        }, {merge: true})
+        const noteRef = doc(db, 'users', currentUser.uid, 'notes', note.id);
+        await setDoc(noteRef, {
+          ...note
+        }, { merge: true })
       } else {
         // create new note
         const newId = note.content.replaceAll('#', '').slice(0, 15) + '__' + Date.now();
@@ -72,7 +65,7 @@ export default function NotesPage() {
           createdAt: serverTimestamp()
         })
         setNoteIds(curr => [...curr, newId])
-        setNote({...note, id: newId})
+        setNote({ ...note, id: newId })
         window.history.pushState(null, '', `?id=${newId}`)
       }
     } catch (error) {
@@ -88,13 +81,12 @@ export default function NotesPage() {
     const value = searchParams.get('id')
     if (!value || !currentUser) {return}
     async function fetchNote() {
-      if (isloading) {return}
+      if (isLoading) {return}
       try {
         setIsLoading(true)
-        const notesRef = doc(db, 'users', currentUser.uid, 'notes', value);
-        const snapshot = await getDoc(notesRef)
-        const docData = snapshot.exists() ? { id: snapshot.id, ...snapshot.
-          data() } : null
+        const noteRef = doc(db, 'users', currentUser.uid, 'notes', value);
+        const snapshot = await getDoc(noteRef)
+        const docData = snapshot.exists() ? { id: snapshot.id, ...snapshot.data() } : null
           if (docData) {
             setNote({...docData})
           }
@@ -105,9 +97,8 @@ export default function NotesPage() {
       }
     }
     fetchNote()
-  }, [searchParams, currentUser])
-  console.log('CURRENT USER: ', currentUser)
-  if (isLoadingUser) {
+  }, [currentUser, searchParams])
+    if (isLoadingUser) {
     return (
       <h6 className="text-gradient">Loading...</h6>
     )
@@ -119,12 +110,12 @@ export default function NotesPage() {
   }
   return (
     <main id="notes">
-      <SideNav setIsViewer={setIsViewer} handleCreateNote={handleCreateNote} noteIds={noteIds} setNoteIds={setNoteIds} showNav={showNav} setShowNav={setShowNav}/>
+      <SideNav setIsViewer={setIsViewer} handleCreateNote={handleCreateNote} noteIds={noteIds} setNoteIds={setNoteIds} showNav={showNav} setShowNav={setShowNav} />
       {!isViewer && (
-        <Editor savingNote={savingNote} handleSaveNote={handleSaveNote} handleToggleMenu={handleToggleMenu} setText={handleEditNote} text={note.content} isViewer={isViewer} handleToggleViewer={handleToggleViewer}/>
+        <Editor savingNote={savingNote} handleSaveNote={handleSaveNote} handleToggleMenu={handleToggleMenu} setText={handleEditNote} text={note.content} isViewer={isViewer} handleToggleViewer={handleToggleViewer} />
       )}
       {isViewer && (
-        <MDX savingNote={savingNote} handleSaveNote={handleSaveNote} handleToggleMenu={handleToggleMenu} text={note.content} isViewer={isViewer} handleToggleViewer={handleToggleViewer}/>
+        <MDX savingNote={savingNote} handleSaveNote={handleSaveNote} handleToggleMenu={handleToggleMenu} text={note.content} isViewer={isViewer} handleToggleViewer={handleToggleViewer} />
       )}
     </main>
   );

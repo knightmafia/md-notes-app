@@ -1,8 +1,6 @@
-import { doc } from 'firebase/firestore';
-import { deleteDoc } from 'firebase/firestore';
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/firebase";
-import { collection, getDocs } from "firebase/firestore";
+import { collection,deleteDoc, doc, getDocs } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 
@@ -15,22 +13,20 @@ export default function SideNav(props) {
 
   async function deleteNote(noteIdx) {
     try {
-      const notesRef = doc(db, 'users', currentUser.uid, 'notes', noteIdx)
-      await deleteDoc(notesRef)
+      const noteRef = doc(db, 'users', currentUser.uid, 'notes', noteIdx)
+      await deleteDoc(noteRef)
       setNoteIds((curr) => {
         return curr.filter(idx => idx !== noteIdx)
       })
     } catch (error) {
       console.log(error.message)
-    } finally {
-
-    }
+    } finally { }
   }
 
   useEffect(() => {
     //code block that gets executed when the ref changes/assigned
-    console.log('ref', ref.current);
-    const handleClickOutside = (event) => {
+    
+    function handleClickOutside(event) {
       if (ref.current && !ref.current.contains(event.target)) {
         setShowNav(false);
       }
@@ -49,10 +45,10 @@ export default function SideNav(props) {
       try {
         const notesRef = collection(db, 'users', currentUser.uid, 'notes')
         const snapshot = await getDocs(notesRef)
-        const notesIndexs = snapshot.docs.map((doc) => {
+        const notesIndexes = snapshot.docs.map((doc) => {
           return doc.id
         })
-        setNoteIds(notesIndexs)
+        setNoteIds(notesIndexes)
       } catch (error) {
         console.log(error.message)
       } finally {
@@ -62,12 +58,12 @@ export default function SideNav(props) {
     fetchIndexes()
   },[]);
   return (
-    <section ref={ref} className={"nav " + (showNav ? '' : 'hidden-nav')}>
+    <section ref={ref} className={"nav " + (showNav ? '' : ' hidden-nav ')}>
       <h1 className="text-gradient">MDNOTES</h1>
       <h6>Easy Breezy Notes</h6>
       <div className="full-line"></div>
       <button onClick={handleCreateNote}>
-        <h6>New Note</h6>
+        <h6>New note</h6>
         <i className="fa-solid fa-plus"></i>
       </button>
       <div className="notes-list">
@@ -76,14 +72,14 @@ export default function SideNav(props) {
           noteIds.map((note, idx) => {
             const [n, d] = note.split('__')
             const date = (new Date(parseInt(d))).toString()
-            console.log(date)
+
             return (
               <button onClick={() => {
-                router.push(`/notes?id=` + note)
+                router.push('/notes?id=' + note)
                 setIsViewer(true)
               }} key={idx} className="card-button-secondary list-btn">
                 <p>{n}</p>
-                <small>{date.split(' ').slice(1,4).join(' ')}</small>
+                <small>{date.split(' ').slice(1, 4).join(' ')}</small>
                 <div onClick={(e) => {
                   e.stopPropagation()
                   deleteNote(note)
@@ -95,8 +91,8 @@ export default function SideNav(props) {
         })}
       </div>
       <div className="full-line"></div>
-      <button onClick={logout}>
-        <h6>Log out</h6>
+      <button onClick={logout} >
+        <h6>Logout</h6>
         <i className="fa-solid fa-arrow-right-from-bracket"></i>
       </button>
     </section>
